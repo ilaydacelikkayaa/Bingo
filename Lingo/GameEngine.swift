@@ -16,7 +16,7 @@ final class GameEngine{
         guard let lastAttempt=attempts.last else {return false}
         return lastAttempt.allSatisfy{ $0.state == .correct}
     }
-    private(set) var secretWord: String
+    private(set) var secretWord: String //herkes okur ama değerini sadece bu sınıf değiştirebilir set
     private(set) var attempts: [[LetterResult]] = []
     private(set) var lockedLetters:[Character?]
     init(secretWord:String,wordLength:Int){
@@ -40,19 +40,13 @@ final class GameEngine{
         }
         return outputs
     }
-    func submit(guess:String)->(results : [LetterResult],nextHit:String)?{
+    func submit(guess:String)->[LetterResult]?{
         let guessLower = guess.lowercased()
         let guessChars = Array(guessLower)
         guard attempts.count<MaxAttempts else{return nil}
         guard guessChars.count == wordLength else { return nil }
         let secretChars = Array(secretWord)
-        for i in 0..<wordLength{
-            if let lockedChar=lockedLetters[i]{
-                if guessChars[i] != lockedChar{
-                    return nil
-                }
-            }
-        }
+     
         let eval=evaluate(guess: guessChars, secret: secretChars)
         for i in 0..<wordLength{
             if eval[i].state == .correct{
@@ -61,7 +55,7 @@ final class GameEngine{
         }
         attempts.append(eval)
         let nextHit = startRowPrefill()
-        return (eval,nextHit)
+        return (eval)
         
         
     }
