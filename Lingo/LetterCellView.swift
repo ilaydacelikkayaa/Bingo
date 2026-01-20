@@ -51,5 +51,6 @@ final class LetterCellView: UIView{
             backgroundColor=UIColor.systemGray4
             layer.borderColor = UIColor.systemGray4.cgColor
         }
+        //bu fonksiyon hücrenin görünümünü letterstate e gore günceller
     }
 }
