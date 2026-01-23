@@ -6,6 +6,11 @@
 //
 
 import UIKit
+enum GameState {
+    case playing
+    case won
+    case lost
+}
 
 class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDelegate protokolü, kullanıcı etkileşimlerini
     // yakalamak için kullanılan bir iletişim köprüsüdür.
@@ -15,29 +20,88 @@ class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDeleg
     private let guessTextField = UITextField()
     private var currentRow = 0
     private var currentCol = 0
+    private var currentGuess = ""
+    private var currentState: GameState = .playing
+    
+    private func startNewRow() {
+        let firstChar = Array(engine.secretWord)[0]
+        currentGuess = String(firstChar)
+        currentCol = 1
+        gridView.setCell(row: currentRow, col: 0, letter: firstChar)
+    }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
        guessTextField.becomeFirstResponder()
     }
     func textField(_ textField:UITextField , shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool { //range değişim nerede string yeni basılan harf
-        if string.isEmpty{
-            print("Silme tuşu algılandı! CurrentCol: \(currentCol)")
-            if currentCol>0{
-                currentCol -= 1 //kullanıcı imlece bastıgında bi onceki sutuna gider silme fonk
-                gridView.setCell(row: currentRow, col: currentCol, letter: nil)
-                
-            }
+        textField.text = " " //içeride silinecek bir şey var diyorum
+        if currentState != .playing {
             return false
         }
-        guard let char=string.lowercased().first else{return false}
-        guard currentCol<engine.wordLength else{return false}
+
+        if string == "\n" && currentGuess.count < engine.wordLength {
+            // Satır bitmedi, aynı satırda devam
+            currentCol = currentGuess.count
+            return false
+        }
+
+        if string == "\n" &&  currentGuess.count == engine.wordLength {
+            print("Return tuşuna basıldı, kelime:",currentGuess)
+            if let results = engine.submit(guess: currentGuess){
+                gridView.setResultRow(currentRow, results: results)
+                if currentGuess.lowercased() == engine.secretWord.lowercased(){
+                    currentState = .won
+                    showGameResult()
+                    return false
+                }
+                if currentRow == engine.MaxAttempts - 1 {
+                    currentState = .lost
+                    showGameResult()
+                    return false
+                }
+
+                currentRow += 1
+               startNewRow()
+          
+            }
+            
+            return false
+        }
+        
+        if string.isEmpty{
+            guard currentGuess.count>1 else { return false}
+            print("Silme denendi. Mevcut kelime: \(currentGuess)")
+            guard !currentGuess.isEmpty else{return false}
+            currentGuess.removeLast()
+            currentCol=currentGuess.count
+            
+                gridView.setCell(row: currentRow, col: currentCol, letter: nil)
+                
+            
+            return false
+        }
+
+        guard let char = string.uppercased(with: Locale(identifier: "tr")).first else{return false}
+        guard currentGuess.count<engine.wordLength else{return false}
+        currentCol=currentGuess.count
+        currentGuess.append(char) // State'e (hafızaya) ekle
         gridView.setCell(row: currentRow, col: currentCol, letter: char)
-        currentCol+=1
+        print("Eklenen harf: \(char), Yeni kelime: \(currentGuess)")
         return false
     
 
     }
+    private func showGameResult(){
+        let resultVC=GameResultViewController(
+            isWin: currentState == .won,
+            answer: engine.secretWord
+
+        )
+        resultVC.modalPresentationStyle = .overFullScreen
+         present(resultVC, animated: true)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -74,7 +138,7 @@ class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDeleg
             guessTextField.heightAnchor.constraint(equalToConstant: 44)
         ])
       
-  
+       startNewRow()
 
     }
 
