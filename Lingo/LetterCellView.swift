@@ -22,6 +22,7 @@ final class LetterCellView: UIView{
         layer.borderColor = UIColor.systemGray4.cgColor // Çerçeve rengi açık gri
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 22, weight: .bold)
+        label.textColor = .white
         label.textAlignment = .center
         addSubview(label)
         
@@ -39,6 +40,11 @@ final class LetterCellView: UIView{
         }
         
     }
+    func resetAppearance() {
+        backgroundColor = .clear
+        layer.borderColor = UIColor.systemGray4.cgColor
+    }
+
     func setState(_ state:LetterState){
         switch state{
         case .correct:

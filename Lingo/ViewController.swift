@@ -22,6 +22,7 @@ class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDeleg
     private var currentCol = 0
     private var currentGuess = ""
     private var currentState: GameState = .playing
+    private let topBar = GameTopBarView()
     
     private func startNewRow() {
         let firstChar = Array(engine.secretWord)[0]
@@ -29,7 +30,20 @@ class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDeleg
         currentCol = 1
         gridView.setCell(row: currentRow, col: 0, letter: firstChar)
     }
+    private func setupBackground() {
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            UIColor(red: 20/255, green: 30/255, blue: 60/255, alpha: 1).cgColor,
+            UIColor(red: 10/255, green: 15/255, blue: 35/255, alpha: 1).cgColor
+        ]
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1, y: 1)
+        gradient.frame = view.bounds
 
+        view.layer.insertSublayer(gradient, at: 0)
+    }
+
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
        guessTextField.becomeFirstResponder()
@@ -92,6 +106,7 @@ class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDeleg
     
 
     }
+ 
     private func showGameResult(){
         let resultVC=GameResultViewController(
             isWin: currentState == .won,
@@ -100,10 +115,35 @@ class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDeleg
         )
         resultVC.modalPresentationStyle = .overFullScreen
          present(resultVC, animated: true)
+        resultVC.onRestart = { [weak self] in
+            self?.restartGame()
+        }
+
     }
+    private func restartGame() {
+        currentRow = 0
+        currentCol = 0
+        currentGuess = ""
+        currentState = .playing
+
+      
+
+        clearGridUI()
+        startNewRow()
+    }
+    private func clearGridUI() {
+        gridView.clear()
+    }
+
     
     override func viewDidLoad() {
+        
+        topBar.translatesAutoresizingMaskIntoConstraints = false
         super.viewDidLoad()
+        setupBackground()
+
+      
+        
         view.backgroundColor = .systemBackground
         guessTextField.translatesAutoresizingMaskIntoConstraints = false
         guessTextField.borderStyle = .roundedRect
@@ -115,32 +155,31 @@ class ViewController: UIViewController,UITextFieldDelegate { // UITextFieldDeleg
         view.addSubview(guessTextField)
         guessTextField.delegate=self
 
-
+        
+        view.addSubview(topBar)
         gridView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(gridView)
         NSLayoutConstraint.activate([
-            // GridView'ı ekranın üst kısmından (güvenli alan) 50 birim aşağıya koy
-            gridView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 50),
+            topBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor,constant: 16), //üst bar
+            topBar.centerXAnchor.constraint(equalTo: view.centerXAnchor),//sag sol
+            topBar.widthAnchor.constraint(equalTo: view.widthAnchor,multiplier:0.9), //genislik
+             topBar.heightAnchor.constraint(equalToConstant: 56), //Yukseklik
+                    
+                    gridView.topAnchor.constraint(equalTo: topBar.bottomAnchor, constant: 24),
+                    gridView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                    gridView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9), // Ekranın %90'ı
+                    gridView.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            gridView.heightAnchor.constraint(equalToConstant: 400),
+                
+                gridView.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+                
             
-            // Yatayda tam ortala
-            gridView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            
-            // Genişlik ve Yükseklik hesaplamaların doğru
-            gridView.widthAnchor.constraint(equalToConstant: CGFloat(engine.wordLength) * 52 + CGFloat(engine.wordLength - 1) * 8),
-            gridView.heightAnchor.constraint(equalToConstant: CGFloat(engine.MaxAttempts) * 52 + CGFloat(engine.MaxAttempts - 1) * 8),
-            guessTextField.topAnchor.constraint(equalTo: gridView.bottomAnchor, constant: 24),
-
-            // Ekranın solundan ve sağından boşluk bırak
-            guessTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            guessTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-
-            // Sabit yükseklik
-            guessTextField.heightAnchor.constraint(equalToConstant: 44)
         ])
       
        startNewRow()
 
     }
+  
 
 
 }

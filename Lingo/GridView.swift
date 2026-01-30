@@ -39,6 +39,15 @@ final class GridView: UIView {
         buildGrid()
         
     }
+    func clear() {
+        for row in 0..<rows {
+            for col in 0..<cols {
+                cells[row][col].setLetter(nil)
+                cells[row][col].resetAppearance()
+            }
+        }
+    }
+ 
     private func buildGrid(){
         for _ in 0..<rows{
             let rowStack = UIStackView()
